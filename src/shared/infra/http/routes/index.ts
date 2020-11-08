@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
+import PatientsRouter from '@modules/patients/infra/http/routes/patient.routes';
+
 const router = Router();
 
-router.get('/', (req, res) => {
-  res.send('ola mundo');
-})
+router.use('/patients', PatientsRouter);
 
 export default router;

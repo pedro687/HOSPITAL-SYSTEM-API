@@ -15,5 +15,6 @@
       "@config/*": ["config/*"],
       "@shared/*": ["shared/*"],
     },
+    "strictPropertyInitialization": false
   }
 }
