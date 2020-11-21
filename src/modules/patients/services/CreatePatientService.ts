@@ -1,52 +1,57 @@
-import { inject, injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
 
-//Entities
-import Patients from '@modules/patients/infra/typeorm/entities/Patients';
+import AppError from '../../../shared/errors/AppError';
 
-//Interfaces
-import IPatientsRepository from '@modules/patients/repositories/IPatientsRepository';
-import AppError from '@shared/errors/AppError';
+import IPatientsRepository from '../repositories/IPatientsRepository';
+import IResponsibleRepository from '../../responsibles/repositories/IResponsiblesRepository';
+
+import Patient from '../infra/typeorm/entities/Patient';
 
 interface IRequest {
-  name: string | undefined;
-  age: number | undefined;
-  patology: string | undefined;
-  cep: string | undefined;
-  uf: string | undefined;
-  city: string | undefined;
+  responsible_id: string;
+  name: string;
+  age: string;
+  patology: string;
 }
 
 @injectable()
 export default class CreatePatientService {
-  private patientsRepository: IPatientsRepository;
+  constructor(
+    @inject('PatientsRepository')
+    private patientsRepository: IPatientsRepository,
 
-  constructor (
-    @inject('PatientRepository')
-    patientsRepository: IPatientsRepository,
-  ){
-    this.patientsRepository = patientsRepository;
-  }
+    @inject('ResponsiblesRepository')
+    private responsiblesRepository: IResponsibleRepository,
+  ) {}
 
   public async execute({
+    responsible_id,
     name,
     age,
-    cep,
-    city,
     patology,
-    uf,
-  }: IRequest): Promise<Patients> {
+  }: IRequest): Promise<Patient> {
+    const checkResponsibleExists = await this.responsiblesRepository.findById(
+      responsible_id,
+    );
+
+    if (!checkResponsibleExists) {
+      throw new AppError('Responsible authenticated does not exists');
+    }
+
+    const patientsOfResponsibles = await this.patientsRepository.findByResponsibleId(
+      responsible_id,
+    );
+
+    if (patientsOfResponsibles.length === 2) {
+      throw new AppError('Maximum caregivers amount reached');
+    }
+
     const patient = await this.patientsRepository.create({
+      responsible_id,
       name,
       age,
-      cep,
-      city,
       patology,
-      uf,
     });
-
-    if (!name || !age || !patology || !cep || !uf || !city) {
-      throw new AppError('Have empty fields', 401);
-    }
 
     return patient;
   }

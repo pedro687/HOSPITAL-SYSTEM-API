@@ -1,64 +1,62 @@
 import { Repository, getRepository } from 'typeorm';
 
-import ICreatePatientsDTO from '@modules/patients/DTOs/IPatientsDTO';
-import IPatientsRepository from '@modules/patients/repositories/IPatientsRepository';
+import ICreatePatientDTO from '../../../dtos/ICreatePatientDTO';
+import IPatientsRepository from '../../../repositories/IPatientsRepository';
 
-import Patients from '../entities/Patients';
-import AppError from '@shared/errors/AppError';
+import Patient from '../entities/Patient';
 
 export default class PatientsRepository implements IPatientsRepository {
-  private ormRepository: Repository<Patients>;
+  private ormRepository: Repository<Patient>;
 
   constructor() {
-    this.ormRepository = getRepository(Patients);
-  }
-  delete(patients: Patients): Promise<Patients> {
-    throw new Error('Method not implemented.');
+    this.ormRepository = getRepository(Patient);
   }
 
-  public async findById(id: string): Promise<Patients | undefined> {
+  public async findById(id: string): Promise<Patient | undefined> {
     const patientFound = await this.ormRepository.findOne(id);
 
     return patientFound;
   }
 
-  public async findAll(): Promise<Array<Patients | undefined>> {
-    const patientFound = await this.ormRepository.find();
+  public async findByIdWithCaregivers(
+    id: string,
+  ): Promise<Patient | undefined> {
+    return this.ormRepository.findOne(id, {
+      relations: ['caregivers'],
+    });
+  }
 
-    return patientFound;
+  public async findByResponsibleId(responsible_id: string): Promise<Patient[]> {
+    const patientsFound = await this.ormRepository.find({
+      where: { responsible_id },
+    });
+
+    return patientsFound;
   }
 
   public async create({
+    responsible_id,
     name,
     age,
-    cep,
-    city,
     patology,
-    uf
-  }: ICreatePatientsDTO): Promise<Patients> {
-    if (!name || !age || !patology || !cep || !uf || !city) {
-      throw new AppError('Have empty fields!', 401);
-    }
-
+  }: ICreatePatientDTO): Promise<Patient> {
     const createdPatient = this.ormRepository.create({
+      responsible_id,
       name,
       age,
-      cep,
-      city,
       patology,
-      uf,
     });
 
-    await this.ormRepository.save(createdPatient);
+    const savedPatient = await this.ormRepository.save(createdPatient);
 
-    return createdPatient;
+    return savedPatient;
   }
 
-  public async save(patient: Patients): Promise<Patients> {
+  public async save(patient: Patient): Promise<Patient> {
     return this.ormRepository.save(patient);
   }
 
-  public async remove(patient: Patients): Promise<Patients> {
+  public async delete(patient: Patient): Promise<Patient> {
     return this.ormRepository.remove(patient);
   }
 }

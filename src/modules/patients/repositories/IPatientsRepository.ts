@@ -1,18 +1,17 @@
-import IPatientsDTO from '@modules/patients/DTOs/IPatientsDTO';
+import ICreatePatientDTO from '../dtos/ICreatePatientDTO';
 
-import Patients from '@modules/patients/infra/typeorm/entities/Patients';
+import Patient from '../infra/typeorm/entities/Patient';
 
 export default interface IPatientsRepository {
-  findById(id: string): Promise<Patients | undefined>;
-  findAll(): Promise<Array<Patients | undefined>>;
+  findById(id: string): Promise<Patient | undefined>;
+  findByIdWithCaregivers(id: string): Promise<Patient | undefined>;
+  findByResponsibleId(responsible_id: string): Promise<Patient[]>;
   create({
+    responsible_id,
     name,
     age,
     patology,
-    cep,
-    uf,
-    city,
-  }: IPatientsDTO): Promise<Patients>;
-  save(patients: Patients): Promise<Patients>;
-  delete(patients: Patients): Promise<Patients>;
+  }: ICreatePatientDTO): Promise<Patient>;
+  save(patient: Patient): Promise<Patient>;
+  delete(patient: Patient): Promise<Patient>;
 }
